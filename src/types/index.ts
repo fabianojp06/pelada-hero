@@ -32,6 +32,7 @@ export interface Match {
   confirmedPlayers: Player[];
   waitingList: Player[];
   organizerId: string;
+  isPublic?: boolean;
 }
 
 export interface FeedPost {
@@ -43,6 +44,7 @@ export interface FeedPost {
   imageUrl?: string;
   videoUrl?: string;
   createdAt: Date;
+  matchId?: string; // For internal match feed
   reactions: {
     ball: number;
     redCard: number;
@@ -56,4 +58,10 @@ export type TeamType = 'vest' | 'noVest';
 export interface Team {
   type: TeamType;
   players: Player[];
+}
+
+export interface PlayerPayment {
+  playerId: string;
+  paid: boolean;
+  paidAt?: Date;
 }

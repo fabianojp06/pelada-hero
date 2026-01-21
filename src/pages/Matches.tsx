@@ -1,25 +1,53 @@
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
-import { mockMatch, mockCurrentPlayer } from '@/data/mockData';
+import { mockMatch, mockCurrentPlayer, mockPlayers } from '@/data/mockData';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar } from 'lucide-react';
+import { useUserMatches } from '@/contexts/UserMatchesContext';
+import { Plus, Calendar, Globe } from 'lucide-react';
+
+// All available matches (public)
+const allMatches = [
+  mockMatch,
+  {
+    ...mockMatch,
+    id: '2',
+    title: 'Pelada de Terça',
+    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+    organizerId: '2',
+    confirmedPlayers: mockPlayers.slice(2, 6),
+    waitingList: [],
+    isPublic: true,
+  },
+  {
+    ...mockMatch,
+    id: '3',
+    title: 'Pelada da Galera',
+    location: 'Quadra do Parque',
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    organizerId: '3',
+    confirmedPlayers: mockPlayers.slice(0, 4),
+    waitingList: [],
+    isPublic: true,
+  },
+];
 
 const Matches = () => {
   const navigate = useNavigate();
+  const { isMatchJoined } = useUserMatches();
   const isOrganizer = mockCurrentPlayer.isOrganizer;
 
-  // Mock multiple matches
-  const upcomingMatches = [mockMatch];
+  // Sort matches: upcoming first
+  const upcomingMatches = allMatches.filter((m) => m.date >= new Date());
   const pastMatches = [
     {
       ...mockMatch,
-      id: '2',
+      id: 'past1',
       title: 'Pelada de Terça',
       date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     },
     {
       ...mockMatch,
-      id: '3',
+      id: 'past2',
       title: 'Pelada Especial',
       date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
     },
@@ -42,17 +70,23 @@ const Matches = () => {
         {/* Upcoming Matches */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            <h3 className="font-display text-xl tracking-wider">PRÓXIMAS</h3>
+            <Globe className="w-5 h-5 text-primary" />
+            <h3 className="font-display text-xl tracking-wider">PELADAS PÚBLICAS</h3>
           </div>
           {upcomingMatches.length > 0 ? (
             upcomingMatches.map((match) => (
-              <MatchCard
-                key={match.id}
-                match={match}
-                featured
-                onClick={() => navigate(`/matches/${match.id}`)}
-              />
+              <div key={match.id} className="relative">
+                <MatchCard
+                  match={match}
+                  featured={isMatchJoined(match.id)}
+                  onClick={() => navigate(`/matches/${match.id}`)}
+                />
+                {isMatchJoined(match.id) && (
+                  <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/20 backdrop-blur-sm">
+                    <span className="text-xs font-bold text-primary">PARTICIPANDO</span>
+                  </div>
+                )}
+              </div>
             ))
           ) : (
             <div className="player-card p-6 text-center">
