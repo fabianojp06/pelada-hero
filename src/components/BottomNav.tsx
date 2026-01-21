@@ -1,11 +1,11 @@
-import { Home, Calendar, MessageSquare, Users, User } from 'lucide-react';
+import { Home, Calendar, MessageSquare, Star, User } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 const navItems = [
   { icon: Home, label: 'Início', path: '/' },
+  { icon: Star, label: 'Minhas', path: '/my-matches' },
   { icon: Calendar, label: 'Partidas', path: '/matches' },
   { icon: MessageSquare, label: 'Feed', path: '/feed' },
-  { icon: Users, label: 'Times', path: '/teams' },
   { icon: User, label: 'Perfil', path: '/profile' },
 ];
 
