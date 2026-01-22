@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      match_feed_posts: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          match_id: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          match_id: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          match_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_feed_posts_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          address: string | null
+          created_at: string
+          creator_id: string
+          date: string
+          id: string
+          is_public: boolean
+          location: string
+          max_players: number
+          price: number
+          time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          creator_id: string
+          date: string
+          id?: string
+          is_public?: boolean
+          location: string
+          max_players?: number
+          price?: number
+          time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          creator_id?: string
+          date?: string
+          id?: string
+          is_public?: boolean
+          location?: string
+          max_players?: number
+          price?: number
+          time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      post_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "match_feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          defending: number
+          dribbling: number
+          id: string
+          name: string
+          nickname: string | null
+          overall: number
+          pace: number
+          passing: number
+          physical: number
+          position: Database["public"]["Enums"]["player_position"]
+          shooting: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          defending?: number
+          dribbling?: number
+          id?: string
+          name: string
+          nickname?: string | null
+          overall?: number
+          pace?: number
+          passing?: number
+          physical?: number
+          position?: Database["public"]["Enums"]["player_position"]
+          shooting?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          defending?: number
+          dribbling?: number
+          id?: string
+          name?: string
+          nickname?: string | null
+          overall?: number
+          pace?: number
+          passing?: number
+          physical?: number
+          position?: Database["public"]["Enums"]["player_position"]
+          shooting?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_matches: {
+        Row: {
+          id: string
+          is_paid: boolean
+          joined_at: string
+          match_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_paid?: boolean
+          joined_at?: string
+          match_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_paid?: boolean
+          joined_at?: string
+          match_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_matches_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +223,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      player_position: "GOL" | "ZAG" | "LAT" | "VOL" | "MEI" | "ATA"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +350,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      player_position: ["GOL", "ZAG", "LAT", "VOL", "MEI", "ATA"],
+    },
   },
 } as const

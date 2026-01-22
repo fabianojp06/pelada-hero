@@ -1,63 +1,45 @@
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
-import { mockMatch, mockCurrentPlayer, mockPlayers } from '@/data/mockData';
+import { MatchCardSkeleton } from '@/components/MatchCardSkeleton';
 import { useNavigate } from 'react-router-dom';
-import { useUserMatches } from '@/contexts/UserMatchesContext';
-import { Plus, Calendar, Globe } from 'lucide-react';
-
-// All available matches (public)
-const allMatches = [
-  mockMatch,
-  {
-    ...mockMatch,
-    id: '2',
-    title: 'Pelada de Terça',
-    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    organizerId: '2',
-    confirmedPlayers: mockPlayers.slice(2, 6),
-    waitingList: [],
-    isPublic: true,
-  },
-  {
-    ...mockMatch,
-    id: '3',
-    title: 'Pelada da Galera',
-    location: 'Quadra do Parque',
-    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    organizerId: '3',
-    confirmedPlayers: mockPlayers.slice(0, 4),
-    waitingList: [],
-    isPublic: true,
-  },
-];
+import { useAuth } from '@/contexts/AuthContext';
+import { useMatches } from '@/hooks/useMatches';
+import { Plus, Globe } from 'lucide-react';
 
 const Matches = () => {
   const navigate = useNavigate();
-  const { isMatchJoined } = useUserMatches();
-  const isOrganizer = mockCurrentPlayer.isOrganizer;
+  const { user } = useAuth();
+  const { data: matches, isLoading } = useMatches(true);
 
-  // Sort matches: upcoming first
-  const upcomingMatches = allMatches.filter((m) => m.date >= new Date());
-  const pastMatches = [
-    {
-      ...mockMatch,
-      id: 'past1',
-      title: 'Pelada de Terça',
-      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    },
-    {
-      ...mockMatch,
-      id: 'past2',
-      title: 'Pelada Especial',
-      date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    },
-  ];
+  const transformMatch = (match: any) => ({
+    id: match.id,
+    title: match.title,
+    location: match.location,
+    address: match.address || '',
+    date: new Date(match.date),
+    time: match.time,
+    price: Number(match.price),
+    maxPlayers: match.max_players,
+    confirmedPlayers: match.participants
+      ?.filter((p: any) => p.status === 'confirmed')
+      .map((p: any) => ({
+        id: p.profiles?.id || p.user_id,
+        name: p.profiles?.name || 'Jogador',
+        nickname: p.profiles?.nickname || 'Jogador',
+        position: p.profiles?.position || 'MEI',
+        overall: p.profiles?.overall || 70,
+        attributes: { pace: 70, shooting: 70, passing: 70, dribbling: 70, defending: 70, physical: 70 },
+      })) || [],
+    waitingList: [],
+    organizerId: match.creator_id,
+  });
+
+  const upcomingMatches = matches?.filter((m) => new Date(m.date) >= new Date()) || [];
 
   return (
     <Layout title="PARTIDAS">
       <div className="p-4 space-y-6">
-        {/* Create Match Button (Organizer Only) */}
-        {isOrganizer && (
+        {user && (
           <button
             onClick={() => navigate('/matches/new')}
             className="w-full btn-gold py-4 rounded-xl flex items-center justify-center gap-2"
@@ -67,44 +49,30 @@ const Matches = () => {
           </button>
         )}
 
-        {/* Upcoming Matches */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-primary" />
             <h3 className="font-display text-xl tracking-wider">PELADAS PÚBLICAS</h3>
           </div>
-          {upcomingMatches.length > 0 ? (
+          
+          {isLoading ? (
+            <div className="space-y-4">
+              <MatchCardSkeleton />
+              <MatchCardSkeleton />
+            </div>
+          ) : upcomingMatches.length > 0 ? (
             upcomingMatches.map((match) => (
-              <div key={match.id} className="relative">
-                <MatchCard
-                  match={match}
-                  featured={isMatchJoined(match.id)}
-                  onClick={() => navigate(`/matches/${match.id}`)}
-                />
-                {isMatchJoined(match.id) && (
-                  <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/20 backdrop-blur-sm">
-                    <span className="text-xs font-bold text-primary">PARTICIPANDO</span>
-                  </div>
-                )}
-              </div>
+              <MatchCard
+                key={match.id}
+                match={transformMatch(match)}
+                onClick={() => navigate(`/matches/${match.id}`)}
+              />
             ))
           ) : (
             <div className="player-card p-6 text-center">
-              <p className="text-muted-foreground">Nenhuma pelada agendada</p>
+              <p className="text-muted-foreground">Nenhuma pelada pública agendada</p>
             </div>
           )}
-        </div>
-
-        {/* Past Matches */}
-        <div className="space-y-3">
-          <h3 className="font-display text-xl tracking-wider text-muted-foreground">ANTERIORES</h3>
-          {pastMatches.map((match) => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              onClick={() => navigate(`/matches/${match.id}`)}
-            />
-          ))}
         </div>
       </div>
     </Layout>
