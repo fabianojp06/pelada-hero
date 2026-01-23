@@ -6,6 +6,23 @@ import type { Match, UserMatch, Profile } from '@/types/database';
 interface MatchWithDetails extends Match {
   creator: Profile | null;
   participants: (UserMatch & { profiles: Profile })[];
+  latitude?: number | null;
+  longitude?: number | null;
+  players_per_side?: number;
+}
+
+interface CreateMatchInput {
+  title: string;
+  location: string;
+  address: string | null;
+  date: string;
+  time: string;
+  price: number;
+  max_players: number;
+  players_per_side: number;
+  is_public: boolean;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export const useMatches = (publicOnly = true) => {
@@ -113,20 +130,51 @@ export const useMyMatches = () => {
   });
 };
 
+export const useCreateMatch = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (input: CreateMatchInput) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      
+      const { data, error } = await (supabase as any)
+        .from('matches')
+        .insert({
+          ...input,
+          creator_id: user.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+      queryClient.invalidateQueries({ queryKey: ['my-matches'] });
+    },
+  });
+};
+
 export const useJoinMatch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (matchId: string) => {
+    mutationFn: async ({ matchId, isPublic }: { matchId: string; isPublic: boolean }) => {
       if (!user?.id) throw new Error('Not authenticated');
+      
+      // For public matches, users start as 'waiting' (pending approval)
+      // For private matches or when user is creator, they start as 'confirmed'
+      const status = isPublic ? 'waiting' : 'confirmed';
       
       const { data, error } = await (supabase as any)
         .from('user_matches')
         .insert({
           user_id: user.id,
           match_id: matchId,
-          status: 'joined',
+          status,
         })
         .select()
         .single();
@@ -162,6 +210,49 @@ export const useLeaveMatch = () => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['match'] });
       queryClient.invalidateQueries({ queryKey: ['my-matches'] });
+    },
+  });
+};
+
+export const useApproveParticipant = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ matchId, participantId }: { matchId: string; participantId: string }) => {
+      const { data, error } = await (supabase as any)
+        .from('user_matches')
+        .update({ status: 'confirmed' })
+        .eq('id', participantId)
+        .eq('match_id', matchId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['match'] });
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+    },
+  });
+};
+
+export const useRejectParticipant = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ matchId, participantId }: { matchId: string; participantId: string }) => {
+      const { error } = await (supabase as any)
+        .from('user_matches')
+        .delete()
+        .eq('id', participantId)
+        .eq('match_id', matchId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['match'] });
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
     },
   });
 };

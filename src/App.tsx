@@ -11,6 +11,7 @@ import { InstallPrompt } from "@/components/InstallPrompt";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
 import MatchDetails from "./pages/MatchDetails";
+import CreateMatch from "./pages/CreateMatch";
 import MyMatches from "./pages/MyMatches";
 import Feed from "./pages/Feed";
 import Teams from "./pages/Teams";
@@ -34,6 +35,14 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/matches" element={<Matches />} />
                 <Route path="/matches/:id" element={<MatchDetails />} />
+                <Route
+                  path="/matches/new"
+                  element={
+                    <ProtectedRoute>
+                      <CreateMatch />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/my-matches"
                   element={

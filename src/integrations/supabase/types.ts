@@ -57,8 +57,11 @@ export type Database = {
           date: string
           id: string
           is_public: boolean
+          latitude: number | null
           location: string
+          longitude: number | null
           max_players: number
+          players_per_side: number
           price: number
           time: string
           title: string
@@ -71,8 +74,11 @@ export type Database = {
           date: string
           id?: string
           is_public?: boolean
+          latitude?: number | null
           location: string
+          longitude?: number | null
           max_players?: number
+          players_per_side?: number
           price?: number
           time: string
           title: string
@@ -85,8 +91,11 @@ export type Database = {
           date?: string
           id?: string
           is_public?: boolean
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           max_players?: number
+          players_per_side?: number
           price?: number
           time?: string
           title?: string
