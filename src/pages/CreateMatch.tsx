@@ -86,7 +86,7 @@ const CreateMatch = () => {
     }
 
     try {
-      await createMatch.mutateAsync({
+      const matchData = {
         title: formData.title,
         location: formData.location,
         address: formData.address || null,
@@ -98,7 +98,13 @@ const CreateMatch = () => {
         is_public: formData.isPublic,
         latitude: useCurrentLocation && hasLocation ? latitude : null,
         longitude: useCurrentLocation && hasLocation ? longitude : null,
-      });
+      };
+
+      console.log('[CreateMatch] Submitting match:', matchData);
+
+      const result = await createMatch.mutateAsync(matchData);
+      
+      console.log('[CreateMatch] Match created:', result);
 
       toast({
         title: 'Pelada criada!',
@@ -107,9 +113,13 @@ const CreateMatch = () => {
 
       navigate('/my-matches');
     } catch (error: any) {
+      console.error('[CreateMatch] Error creating match:', error);
+      
+      const errorMessage = error?.message || 'Erro desconhecido ao criar pelada';
+      
       toast({
         title: 'Erro ao criar pelada',
-        description: error.message || 'Tente novamente mais tarde.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }

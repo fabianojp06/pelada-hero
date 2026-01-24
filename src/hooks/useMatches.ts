@@ -29,7 +29,7 @@ export const useMatches = (publicOnly = true) => {
   return useQuery({
     queryKey: ['matches', publicOnly],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = supabase
         .from('matches')
         .select(`
           *,
@@ -44,8 +44,11 @@ export const useMatches = (publicOnly = true) => {
 
       const { data, error } = await query;
       
-      if (error) throw error;
-      return (data || []) as MatchWithDetails[];
+      if (error) {
+        console.error('[useMatches] Error fetching matches:', error);
+        throw error;
+      }
+      return (data || []) as unknown as MatchWithDetails[];
     },
   });
 };
@@ -56,7 +59,7 @@ export const useMatch = (matchId: string | undefined) => {
     queryFn: async () => {
       if (!matchId) return null;
       
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('matches')
         .select(`
           *,
@@ -66,8 +69,11 @@ export const useMatch = (matchId: string | undefined) => {
         .eq('id', matchId)
         .maybeSingle();
       
-      if (error) throw error;
-      return data as MatchWithDetails | null;
+      if (error) {
+        console.error('[useMatch] Error fetching match:', error);
+        throw error;
+      }
+      return data as unknown as MatchWithDetails | null;
     },
     enabled: !!matchId,
   });
@@ -82,7 +88,7 @@ export const useMyMatches = () => {
       if (!user?.id) return [];
       
       // Get matches where user is creator
-      const { data: createdMatches, error: createdError } = await (supabase as any)
+      const { data: createdMatches, error: createdError } = await supabase
         .from('matches')
         .select(`
           *,
@@ -91,20 +97,26 @@ export const useMyMatches = () => {
         `)
         .eq('creator_id', user.id);
       
-      if (createdError) throw createdError;
+      if (createdError) {
+        console.error('[useMyMatches] Error fetching created matches:', createdError);
+        throw createdError;
+      }
 
       // Get matches where user has joined
-      const { data: joinedMatchIds, error: joinedError } = await (supabase as any)
+      const { data: joinedMatchIds, error: joinedError } = await supabase
         .from('user_matches')
         .select('match_id')
         .eq('user_id', user.id);
       
-      if (joinedError) throw joinedError;
+      if (joinedError) {
+        console.error('[useMyMatches] Error fetching joined matches:', joinedError);
+        throw joinedError;
+      }
 
-      const matchIds = joinedMatchIds?.map((m: any) => m.match_id) || [];
+      const matchIds = joinedMatchIds?.map((m) => m.match_id) || [];
       
       if (matchIds.length > 0) {
-        const { data: joinedMatches, error: matchesError } = await (supabase as any)
+        const { data: joinedMatches, error: matchesError } = await supabase
           .from('matches')
           .select(`
             *,
@@ -113,18 +125,21 @@ export const useMyMatches = () => {
           `)
           .in('id', matchIds);
         
-        if (matchesError) throw matchesError;
+        if (matchesError) {
+          console.error('[useMyMatches] Error fetching joined match details:', matchesError);
+          throw matchesError;
+        }
 
         // Combine and deduplicate
         const allMatches = [...(createdMatches || []), ...(joinedMatches || [])];
-        const uniqueMatches = allMatches.filter((match: any, index: number, self: any[]) =>
-          index === self.findIndex((m: any) => m.id === match.id)
+        const uniqueMatches = allMatches.filter((match, index, self) =>
+          index === self.findIndex((m) => m.id === match.id)
         );
         
-        return uniqueMatches as MatchWithDetails[];
+        return uniqueMatches as unknown as MatchWithDetails[];
       }
 
-      return (createdMatches || []) as MatchWithDetails[];
+      return (createdMatches || []) as unknown as MatchWithDetails[];
     },
     enabled: !!user?.id,
   });
@@ -136,23 +151,48 @@ export const useCreateMatch = () => {
 
   return useMutation({
     mutationFn: async (input: CreateMatchInput) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) {
+        console.error('[useCreateMatch] User not authenticated');
+        throw new Error('Você precisa estar logado para criar uma pelada');
+      }
       
-      const { data, error } = await (supabase as any)
+      const insertData = {
+        title: input.title,
+        location: input.location,
+        address: input.address,
+        date: input.date,
+        time: input.time,
+        price: input.price,
+        max_players: input.max_players,
+        players_per_side: input.players_per_side,
+        is_public: input.is_public,
+        latitude: input.latitude,
+        longitude: input.longitude,
+        creator_id: user.id,
+      };
+      
+      console.log('[useCreateMatch] Inserting match:', insertData);
+      
+      const { data, error } = await supabase
         .from('matches')
-        .insert({
-          ...input,
-          creator_id: user.id,
-        })
+        .insert(insertData)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useCreateMatch] Supabase error:', error);
+        throw new Error(error.message || 'Erro ao salvar partida no banco de dados');
+      }
+      
+      console.log('[useCreateMatch] Match created successfully:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['my-matches'] });
+    },
+    onError: (error) => {
+      console.error('[useCreateMatch] Mutation error:', error);
     },
   });
 };
@@ -163,13 +203,18 @@ export const useJoinMatch = () => {
 
   return useMutation({
     mutationFn: async ({ matchId, isPublic }: { matchId: string; isPublic: boolean }) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) {
+        console.error('[useJoinMatch] User not authenticated');
+        throw new Error('Você precisa estar logado para participar');
+      }
       
       // For public matches, users start as 'waiting' (pending approval)
       // For private matches or when user is creator, they start as 'confirmed'
       const status = isPublic ? 'waiting' : 'confirmed';
       
-      const { data, error } = await (supabase as any)
+      console.log('[useJoinMatch] Joining match:', { matchId, status });
+      
+      const { data, error } = await supabase
         .from('user_matches')
         .insert({
           user_id: user.id,
@@ -179,7 +224,12 @@ export const useJoinMatch = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useJoinMatch] Error joining match:', error);
+        throw new Error(error.message || 'Erro ao participar da pelada');
+      }
+      
+      console.log('[useJoinMatch] Joined successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -196,15 +246,25 @@ export const useLeaveMatch = () => {
 
   return useMutation({
     mutationFn: async (matchId: string) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!user?.id) {
+        console.error('[useLeaveMatch] User not authenticated');
+        throw new Error('Você precisa estar logado');
+      }
       
-      const { error } = await (supabase as any)
+      console.log('[useLeaveMatch] Leaving match:', matchId);
+      
+      const { error } = await supabase
         .from('user_matches')
         .delete()
         .eq('user_id', user.id)
         .eq('match_id', matchId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useLeaveMatch] Error leaving match:', error);
+        throw new Error(error.message || 'Erro ao sair da pelada');
+      }
+      
+      console.log('[useLeaveMatch] Left successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matches'] });
@@ -219,7 +279,9 @@ export const useApproveParticipant = () => {
 
   return useMutation({
     mutationFn: async ({ matchId, participantId }: { matchId: string; participantId: string }) => {
-      const { data, error } = await (supabase as any)
+      console.log('[useApproveParticipant] Approving:', { matchId, participantId });
+      
+      const { data, error } = await supabase
         .from('user_matches')
         .update({ status: 'confirmed' })
         .eq('id', participantId)
@@ -227,7 +289,10 @@ export const useApproveParticipant = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useApproveParticipant] Error:', error);
+        throw new Error(error.message || 'Erro ao aprovar participante');
+      }
       return data;
     },
     onSuccess: () => {
@@ -242,13 +307,18 @@ export const useRejectParticipant = () => {
 
   return useMutation({
     mutationFn: async ({ matchId, participantId }: { matchId: string; participantId: string }) => {
-      const { error } = await (supabase as any)
+      console.log('[useRejectParticipant] Rejecting:', { matchId, participantId });
+      
+      const { error } = await supabase
         .from('user_matches')
         .delete()
         .eq('id', participantId)
         .eq('match_id', matchId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useRejectParticipant] Error:', error);
+        throw new Error(error.message || 'Erro ao rejeitar participante');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['match'] });
@@ -262,7 +332,9 @@ export const useUpdateParticipantStatus = () => {
 
   return useMutation({
     mutationFn: async ({ matchId, userId, status }: { matchId: string; userId: string; status: string }) => {
-      const { data, error } = await (supabase as any)
+      console.log('[useUpdateParticipantStatus] Updating:', { matchId, userId, status });
+      
+      const { data, error } = await supabase
         .from('user_matches')
         .update({ status })
         .eq('match_id', matchId)
@@ -270,7 +342,10 @@ export const useUpdateParticipantStatus = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useUpdateParticipantStatus] Error:', error);
+        throw new Error(error.message || 'Erro ao atualizar status');
+      }
       return data;
     },
     onSuccess: () => {
@@ -284,7 +359,9 @@ export const useTogglePayment = () => {
 
   return useMutation({
     mutationFn: async ({ matchId, participantId, isPaid }: { matchId: string; participantId: string; isPaid: boolean }) => {
-      const { data, error } = await (supabase as any)
+      console.log('[useTogglePayment] Toggling:', { matchId, participantId, isPaid });
+      
+      const { data, error } = await supabase
         .from('user_matches')
         .update({ is_paid: isPaid })
         .eq('match_id', matchId)
@@ -292,7 +369,10 @@ export const useTogglePayment = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useTogglePayment] Error:', error);
+        throw new Error(error.message || 'Erro ao atualizar pagamento');
+      }
       return data;
     },
     onSuccess: () => {
