@@ -52,6 +52,38 @@ export type Database = {
           },
         ]
       }
+      match_organizers: {
+        Row: {
+          created_at: string
+          id: string
+          match_id: string
+          promoted_by: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_id: string
+          promoted_by: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_id?: string
+          promoted_by?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_organizers_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           address: string | null
@@ -253,7 +285,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      count_match_organizers: { Args: { _match_id: string }; Returns: number }
+      is_match_organizer: {
+        Args: { _match_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       player_position: "GOL" | "ZAG" | "LAT" | "VOL" | "MEI" | "ATA"
