@@ -8,12 +8,12 @@ import { MatchInternalFeed } from '@/components/MatchInternalFeed';
 import { WaitingListManager } from '@/components/WaitingListManager';
 import { MatchCardSkeleton } from '@/components/MatchCardSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMatch, useJoinMatch, useLeaveMatch, useTogglePayment } from '@/hooks/useMatches';
+import { useMatch, useJoinMatch, useLeaveMatch, useTogglePayment, useDeleteMatch } from '@/hooks/useMatches';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MapPin, Calendar, Clock, DollarSign, ArrowLeft, Users, Shuffle, 
   CheckCircle, MessageSquare, Edit, LogIn, LogOut, Lock, Globe,
-  UserCheck, Loader2, AlertCircle
+  UserCheck, Loader2, AlertCircle, Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,8 +28,10 @@ const MatchDetails = () => {
   const joinMatch = useJoinMatch();
   const leaveMatch = useLeaveMatch();
   const togglePayment = useTogglePayment();
+  const deleteMatch = useDeleteMatch();
   
   const [activeTab, setActiveTab] = useState<'presence' | 'resenha' | 'teams' | 'waiting'>('presence');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Computed values
   const isOrganizer = user?.id === match?.creator_id;
@@ -127,6 +129,23 @@ const MatchDetails = () => {
     } catch (error: any) {
       toast({
         title: 'Erro ao atualizar pagamento',
+        description: error.message || 'Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteMatch = async () => {
+    try {
+      await deleteMatch.mutateAsync(match!.id);
+      toast({
+        title: 'Pelada excluída',
+        description: 'A partida foi removida com sucesso.',
+      });
+      navigate('/my-matches');
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao excluir',
         description: error.message || 'Tente novamente.',
         variant: 'destructive',
       });
@@ -308,6 +327,35 @@ const MatchDetails = () => {
                     )}
                   </button>
                 </div>
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-full py-3 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center gap-2 text-sm hover:bg-destructive/20 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Excluir Pelada
+                  </button>
+                ) : (
+                  <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 space-y-2">
+                    <p className="text-sm text-center text-destructive font-bold">Tem certeza? Esta ação não pode ser desfeita.</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 py-2 rounded-xl bg-secondary text-sm font-bold"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleDeleteMatch}
+                        disabled={deleteMatch.isPending}
+                        className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {deleteMatch.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        Confirmar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
