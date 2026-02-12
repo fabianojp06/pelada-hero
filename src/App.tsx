@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { UserMatchesProvider } from "@/contexts/UserMatchesContext";
+
 import { MatchFeedProvider } from "@/contexts/MatchFeedContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -13,6 +13,7 @@ import Matches from "./pages/Matches";
 import MatchDetails from "./pages/MatchDetails";
 import CreateMatch from "./pages/CreateMatch";
 import MyMatches from "./pages/MyMatches";
+import EditMatch from "./pages/EditMatch";
 import Feed from "./pages/Feed";
 import Teams from "./pages/Teams";
 import Profile from "./pages/Profile";
@@ -25,7 +26,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <UserMatchesProvider>
           <MatchFeedProvider>
             <Toaster />
             <Sonner />
@@ -40,6 +40,14 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <CreateMatch />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/matches/:id/edit"
+                  element={
+                    <ProtectedRoute>
+                      <EditMatch />
                     </ProtectedRoute>
                   }
                 />
@@ -73,7 +81,6 @@ const App = () => (
               <InstallPrompt />
             </BrowserRouter>
           </MatchFeedProvider>
-        </UserMatchesProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,60 +1,101 @@
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
-import { mockMatch, mockPlayers } from '@/data/mockData';
-import { useUserMatches } from '@/contexts/UserMatchesContext';
+import { MatchCardSkeleton } from '@/components/MatchCardSkeleton';
+import { useMyMatches } from '@/hooks/useMatches';
 import { useNavigate } from 'react-router-dom';
 import { Star, Calendar } from 'lucide-react';
 
-// Mock all available matches (public)
-const allMatches = [
-  mockMatch,
-  {
-    ...mockMatch,
-    id: '2',
-    title: 'Pelada de Terça',
-    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    organizerId: '2',
-    isPublic: true,
-  },
-  {
-    ...mockMatch,
-    id: '3',
-    title: 'Pelada da Galera',
-    location: 'Quadra do Parque',
-    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    organizerId: '3',
-    isPublic: true,
-  },
-];
-
 const MyMatches = () => {
   const navigate = useNavigate();
-  const { joinedMatchIds } = useUserMatches();
+  const { data: matches, isLoading } = useMyMatches();
 
-  const myMatches = allMatches.filter((match) => joinedMatchIds.includes(match.id));
+  const now = new Date();
+  const upcoming = matches?.filter((m) => new Date(m.date) >= new Date(now.toISOString().split('T')[0])) || [];
+  const past = matches?.filter((m) => new Date(m.date) < new Date(now.toISOString().split('T')[0])) || [];
+
+  const mapMatch = (m: any) => ({
+    id: m.id,
+    title: m.title,
+    location: m.location,
+    address: m.address || '',
+    date: new Date(m.date),
+    time: m.time,
+    price: Number(m.price),
+    maxPlayers: m.max_players,
+    confirmedPlayers:
+      m.participants
+        ?.filter((p: any) => p.status === 'confirmed')
+        .map((p: any) => ({
+          id: p.profiles?.id || p.user_id,
+          name: p.profiles?.name || 'Jogador',
+          nickname: p.profiles?.nickname || 'Jogador',
+          position: p.profiles?.position || 'MEI',
+          overall: p.profiles?.overall || 70,
+          attributes: {
+            pace: p.profiles?.pace || 70,
+            shooting: p.profiles?.shooting || 70,
+            passing: p.profiles?.passing || 70,
+            dribbling: p.profiles?.dribbling || 70,
+            defending: p.profiles?.defending || 70,
+            physical: p.profiles?.physical || 70,
+          },
+        })) || [],
+    waitingList:
+      m.participants
+        ?.filter((p: any) => p.status === 'waiting')
+        .map((p: any) => ({
+          id: p.profiles?.id || p.user_id,
+          name: p.profiles?.name || 'Jogador',
+          nickname: p.profiles?.nickname || 'Jogador',
+          position: p.profiles?.position || 'MEI',
+          overall: p.profiles?.overall || 70,
+          attributes: {
+            pace: 70, shooting: 70, passing: 70,
+            dribbling: 70, defending: 70, physical: 70,
+          },
+        })) || [],
+    organizerId: m.creator_id,
+  });
 
   return (
     <Layout title="MINHAS PELADAS">
       <div className="p-4 space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-2">
           <Star className="w-5 h-5 text-accent" />
-          <p className="text-muted-foreground">
-            Peladas que você participa
-          </p>
+          <p className="text-muted-foreground">Peladas que você participa</p>
         </div>
 
-        {/* My Matches List */}
-        {myMatches.length > 0 ? (
+        {isLoading ? (
           <div className="space-y-3">
-            {myMatches.map((match) => (
-              <MatchCard
-                key={match.id}
-                match={match}
-                featured={match.id === '1'}
-                onClick={() => navigate(`/matches/${match.id}`)}
-              />
-            ))}
+            <MatchCardSkeleton />
+            <MatchCardSkeleton />
+          </div>
+        ) : upcoming.length > 0 || past.length > 0 ? (
+          <div className="space-y-6">
+            {upcoming.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Próximas</h3>
+                {upcoming.map((m) => (
+                  <MatchCard
+                    key={m.id}
+                    match={mapMatch(m)}
+                    onClick={() => navigate(`/matches/${m.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+            {past.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Passadas</h3>
+                {past.map((m) => (
+                  <MatchCard
+                    key={m.id}
+                    match={mapMatch(m)}
+                    onClick={() => navigate(`/matches/${m.id}`)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="player-card p-8 text-center space-y-4">
