@@ -330,7 +330,7 @@ export function MatchInternalFeed({ matchId }: MatchInternalFeedProps) {
               post={{
                 id: post.id,
                 authorId: post.author_id,
-                authorName: post.profiles?.nickname || post.profiles?.name || 'Jogador',
+                authorName: post.profiles?.name || post.profiles?.nickname || 'Jogador',
                 authorAvatar: post.profiles?.avatar_url || undefined,
                 content: post.content,
                 imageUrl: post.image_url || undefined,
