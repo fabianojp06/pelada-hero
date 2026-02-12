@@ -22,6 +22,7 @@ export type Database = {
           id: string
           image_url: string | null
           match_id: string
+          video_url: string | null
         }
         Insert: {
           author_id: string
@@ -30,6 +31,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           match_id: string
+          video_url?: string | null
         }
         Update: {
           author_id?: string
@@ -38,6 +40,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           match_id?: string
+          video_url?: string | null
         }
         Relationships: [
           {

@@ -418,19 +418,17 @@ const MatchDetails = () => {
                 <MessageSquare className="w-4 h-4" />
                 Resenha
               </button>
-              {isOrganizer && (
-                <button
-                  onClick={() => setActiveTab('teams')}
-                  className={`flex-1 py-3 rounded-xl font-bold uppercase text-sm flex items-center justify-center gap-2 transition-all ${
-                    activeTab === 'teams'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-muted-foreground'
-                  }`}
-                >
-                  <Shuffle className="w-4 h-4" />
-                  Sortear
-                </button>
-              )}
+            <button
+                onClick={() => setActiveTab('teams')}
+                className={`flex-1 py-3 rounded-xl font-bold uppercase text-sm flex items-center justify-center gap-2 transition-all ${
+                  activeTab === 'teams'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-muted-foreground'
+                }`}
+              >
+                <Shuffle className="w-4 h-4" />
+                Sortear
+              </button>
             </div>
 
             {/* Tab Content */}
@@ -476,20 +474,11 @@ const MatchDetails = () => {
               </div>
             )}
 
-            {activeTab === 'resenha' && (isConfirmed || isOrganizer) && (
+            {activeTab === 'resenha' && (
               <MatchInternalFeed matchId={match.id} />
             )}
 
-            {activeTab === 'resenha' && !isConfirmed && !isOrganizer && (
-              <div className="player-card p-8 text-center">
-                <Lock className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  A Resenha está disponível apenas para jogadores confirmados
-                </p>
-              </div>
-            )}
-
-            {activeTab === 'teams' && isOrganizer && (
+            {activeTab === 'teams' && (
               <SmartTeamSorter 
                 players={confirmedPlayers} 
                 playersPerSide={playersPerSide}
