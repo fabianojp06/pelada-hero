@@ -18,6 +18,7 @@ import Feed from "./pages/Feed";
 import Teams from "./pages/Teams";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
+import SearchUsers from "./pages/SearchUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
                   }
                 />
                 <Route path="/teams" element={<Teams />} />
+                <Route path="/search" element={<SearchUsers />} />
                 <Route
                   path="/profile"
                   element={

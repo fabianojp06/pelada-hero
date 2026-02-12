@@ -122,9 +122,9 @@ const Auth = () => {
         } else {
           toast({
             title: 'Conta criada!',
-            description: 'Você já pode usar o app.',
+            description: 'Verifique seu email para confirmar o cadastro antes de fazer login.',
           });
-          navigate('/');
+          setMode('login');
         }
       } else if (mode === 'forgot') {
         const { error } = await resetPassword(email);

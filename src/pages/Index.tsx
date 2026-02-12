@@ -1,8 +1,6 @@
 import { Layout } from '@/components/Layout';
 import { MatchCard } from '@/components/MatchCard';
-import { PlayerCard } from '@/components/PlayerCard';
 import { MatchCardSkeleton } from '@/components/MatchCardSkeleton';
-import { ProfileSkeleton } from '@/components/ProfileSkeleton';
 import { mockMatch, mockCurrentPlayer, positionLabels } from '@/data/mockData';
 import { Plus, TrendingUp, Trophy, Zap, LogIn } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -185,17 +183,40 @@ const Index = () => {
           )}
         </div>
 
-        {/* Your Card - only for authenticated users */}
-        {user && (
-          <div className="space-y-3">
-            <h3 className="text-xl font-display tracking-wider">SEU CARD</h3>
-            {profileLoading ? (
-              <ProfileSkeleton />
-            ) : (
-              <PlayerCard player={currentPlayer} />
-            )}
+        {/* Sports Ads Section */}
+        <div className="space-y-3 animate-slide-up">
+          <h3 className="text-xl font-display tracking-wider">DESTAQUES</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="player-card p-4 text-center cursor-pointer hover:scale-[1.02] transition-transform">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-2xl">👟</span>
+              </div>
+              <p className="font-bold text-sm">Chuteiras</p>
+              <p className="text-xs text-muted-foreground">A partir de R$ 199</p>
+            </div>
+            <div className="player-card p-4 text-center cursor-pointer hover:scale-[1.02] transition-transform">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-2xl">👕</span>
+              </div>
+              <p className="font-bold text-sm">Uniformes</p>
+              <p className="text-xs text-muted-foreground">Personalizados</p>
+            </div>
+            <div className="player-card p-4 text-center cursor-pointer hover:scale-[1.02] transition-transform">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-2xl">🏋️</span>
+              </div>
+              <p className="font-bold text-sm">Suplementos</p>
+              <p className="text-xs text-muted-foreground">Whey & Creatina</p>
+            </div>
+            <div className="player-card p-4 text-center cursor-pointer hover:scale-[1.02] transition-transform">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-2xl">⚽</span>
+              </div>
+              <p className="font-bold text-sm">Acessórios</p>
+              <p className="text-xs text-muted-foreground">Bolas & Caneleiras</p>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </Layout>
   );
