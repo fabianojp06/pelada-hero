@@ -1,5 +1,5 @@
 import { FeedPost as FeedPostType } from '@/types';
-import { User, Circle } from 'lucide-react';
+import { User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,7 +13,7 @@ export function FeedPost({ post, onReact }: FeedPostProps) {
     <div className="feed-card animate-slide-up">
       {/* Header */}
       <div className="p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
           {post.authorAvatar ? (
             <img src={post.authorAvatar} alt={post.authorName} className="w-full h-full rounded-full object-cover" />
           ) : (
@@ -35,8 +35,20 @@ export function FeedPost({ post, onReact }: FeedPostProps) {
 
       {/* Image */}
       {post.imageUrl && (
-        <div className="relative aspect-video">
-          <img src={post.imageUrl} alt="Post" className="w-full h-full object-cover" />
+        <div className="relative">
+          <img src={post.imageUrl} alt="Post" className="w-full max-h-96 object-cover" />
+        </div>
+      )}
+
+      {/* Video */}
+      {post.videoUrl && (
+        <div className="relative">
+          <video
+            src={post.videoUrl}
+            controls
+            className="w-full max-h-96 object-cover"
+            preload="metadata"
+          />
         </div>
       )}
 
