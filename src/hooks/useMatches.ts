@@ -380,6 +380,28 @@ export const useUpdateMatch = () => {
   });
 };
 
+export const useDeleteMatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (matchId: string) => {
+      const { error } = await supabase
+        .from('matches')
+        .delete()
+        .eq('id', matchId);
+
+      if (error) {
+        console.error('[useDeleteMatch] Error:', error);
+        throw new Error(error.message || 'Erro ao excluir pelada');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+      queryClient.invalidateQueries({ queryKey: ['my-matches'] });
+    },
+  });
+};
+
 export const useTogglePayment = () => {
   const queryClient = useQueryClient();
 
