@@ -155,6 +155,7 @@ export type Database = {
           overall: number
           pace: number
           passing: number
+          phone: string | null
           physical: number
           position: Database["public"]["Enums"]["player_position"]
           shooting: number
@@ -172,6 +173,7 @@ export type Database = {
           overall?: number
           pace?: number
           passing?: number
+          phone?: string | null
           physical?: number
           position?: Database["public"]["Enums"]["player_position"]
           shooting?: number
@@ -189,6 +191,7 @@ export type Database = {
           overall?: number
           pace?: number
           passing?: number
+          phone?: string | null
           physical?: number
           position?: Database["public"]["Enums"]["player_position"]
           shooting?: number
