@@ -34,7 +34,7 @@ export const useMatches = (publicOnly = true) => {
         .select(`
           *,
           creator:profiles!matches_creator_id_fkey(*),
-          participants:user_matches(*, profiles(*))
+          participants:user_matches(*, profiles!user_matches_user_id_fkey(*))
         `)
         .order('date', { ascending: true });
 
@@ -64,7 +64,7 @@ export const useMatch = (matchId: string | undefined) => {
         .select(`
           *,
           creator:profiles!matches_creator_id_fkey(*),
-          participants:user_matches(*, profiles(*))
+          participants:user_matches(*, profiles!user_matches_user_id_fkey(*))
         `)
         .eq('id', matchId)
         .maybeSingle();
@@ -93,7 +93,7 @@ export const useMyMatches = () => {
         .select(`
           *,
           creator:profiles!matches_creator_id_fkey(*),
-          participants:user_matches(*, profiles(*))
+          participants:user_matches(*, profiles!user_matches_user_id_fkey(*))
         `)
         .eq('creator_id', user.id);
       
@@ -118,10 +118,10 @@ export const useMyMatches = () => {
       if (matchIds.length > 0) {
         const { data: joinedMatches, error: matchesError } = await supabase
           .from('matches')
-          .select(`
+        .select(`
             *,
             creator:profiles!matches_creator_id_fkey(*),
-            participants:user_matches(*, profiles(*))
+            participants:user_matches(*, profiles!user_matches_user_id_fkey(*))
           `)
           .in('id', matchIds);
         
