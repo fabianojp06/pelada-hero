@@ -56,7 +56,7 @@ const Matches = () => {
       title: match.title,
       location: match.location,
       address: match.address || '',
-      date: new Date(match.date),
+      date: new Date(match.date + 'T00:00:00'),
       time: match.time,
       price: Number(match.price),
       maxPlayers: match.max_players,
@@ -83,7 +83,7 @@ const Matches = () => {
   const sortedMatches = useMemo(() => {
     if (!matches) return [];
     
-    const upcomingMatches = matches.filter((m) => new Date(m.date) >= new Date());
+    const upcomingMatches = matches.filter((m) => new Date(m.date + 'T00:00:00') >= new Date(new Date().toDateString()));
     const transformed = upcomingMatches.map(transformMatch);
     
     if (hasLocation) {

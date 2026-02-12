@@ -18,7 +18,7 @@ const Index = () => {
   const { data: matches, isLoading: matchesLoading } = useMatches();
   
   // Get next upcoming match (future only)
-  const today = new Date().toISOString().split('T')[0];
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
   const nextMatch = matches?.filter(m => m.date >= today)?.[0];
 
   // Build player data from profile or use mock
@@ -131,7 +131,7 @@ const Index = () => {
                 title: nextMatch.title,
                 location: nextMatch.location,
                 address: nextMatch.address || '',
-                date: new Date(nextMatch.date),
+                date: new Date(nextMatch.date + 'T00:00:00'),
                 time: nextMatch.time,
                 price: Number(nextMatch.price),
                 maxPlayers: nextMatch.max_players,

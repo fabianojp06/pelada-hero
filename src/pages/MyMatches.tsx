@@ -10,15 +10,16 @@ const MyMatches = () => {
   const { data: matches, isLoading } = useMyMatches();
 
   const now = new Date();
-  const upcoming = matches?.filter((m) => new Date(m.date) >= new Date(now.toISOString().split('T')[0])) || [];
-  const past = matches?.filter((m) => new Date(m.date) < new Date(now.toISOString().split('T')[0])) || [];
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const upcoming = matches?.filter((m) => m.date >= todayStr) || [];
+  const past = matches?.filter((m) => m.date < todayStr) || [];
 
   const mapMatch = (m: any) => ({
     id: m.id,
     title: m.title,
     location: m.location,
     address: m.address || '',
-    date: new Date(m.date),
+    date: new Date(m.date + 'T00:00:00'),
     time: m.time,
     price: Number(m.price),
     maxPlayers: m.max_players,
