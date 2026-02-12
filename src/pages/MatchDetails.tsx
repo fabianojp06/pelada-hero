@@ -11,11 +11,12 @@ import { MatchTimer } from '@/components/MatchTimer';
 import { ShareMatch } from '@/components/ShareMatch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMatch, useJoinMatch, useLeaveMatch, useTogglePayment, useDeleteMatch } from '@/hooks/useMatches';
+import { useMatchOrganizers, usePromoteOrganizer } from '@/hooks/useMatchOrganizers';
 import { useToast } from '@/hooks/use-toast';
 import { 
   MapPin, Calendar, Clock, DollarSign, ArrowLeft, Users, Shuffle, 
   CheckCircle, MessageSquare, Edit, LogIn, LogOut, Lock, Globe,
-  UserCheck, Loader2, AlertCircle, Trash2
+  UserCheck, Loader2, AlertCircle, Trash2, Shield
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,12 +32,17 @@ const MatchDetails = () => {
   const leaveMatch = useLeaveMatch();
   const togglePayment = useTogglePayment();
   const deleteMatch = useDeleteMatch();
+  const { data: matchOrganizers = [] } = useMatchOrganizers(id);
+  const promoteOrganizer = usePromoteOrganizer();
   
   const [activeTab, setActiveTab] = useState<'presence' | 'resenha' | 'teams' | 'waiting'>('presence');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Computed values
-  const isOrganizer = user?.id === match?.creator_id;
+  // Computed values - creator OR co-organizer
+  const isCreator = user?.id === match?.creator_id;
+  const isCoOrganizer = matchOrganizers.some(o => o.user_id === user?.id);
+  const isOrganizer = isCreator || isCoOrganizer;
+  const organizerCount = 1 + matchOrganizers.length; // creator + co-organizers
   
   const userParticipation = useMemo(() => {
     if (!match || !user) return null;
@@ -68,9 +74,9 @@ const MatchDetails = () => {
         },
         avatar: p.profiles?.avatar_url,
         phone: p.profiles?.phone || null,
-        isOrganizer: p.user_id === match.creator_id,
+        isOrganizer: p.user_id === match.creator_id || matchOrganizers.some(o => o.user_id === p.user_id),
       })) || [];
-  }, [match]);
+  }, [match, matchOrganizers]);
 
   const waitingList = useMemo(() => {
     if (!match) return [];
@@ -133,6 +139,22 @@ const MatchDetails = () => {
     } catch (error: any) {
       toast({
         title: 'Erro ao atualizar pagamento',
+        description: error.message || 'Tente novamente.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePromoteOrganizer = async (userId: string, playerName: string) => {
+    try {
+      await promoteOrganizer.mutateAsync({ matchId: match!.id, userId });
+      toast({
+        title: 'Organizador adicionado!',
+        description: `${playerName} agora é organizador da pelada.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao promover',
         description: error.message || 'Tente novamente.',
         variant: 'destructive',
       });
@@ -221,7 +243,7 @@ const MatchDetails = () => {
         <div className="absolute top-4 right-4 flex gap-2">
           {isOrganizer && (
             <div className="px-3 py-1 rounded-full bg-accent/20 backdrop-blur-sm">
-              <span className="text-xs font-bold text-accent">ORGANIZADOR</span>
+              <span className="text-xs font-bold text-accent">{isCreator ? 'ORGANIZADOR' : 'CO-ORGANIZADOR'}</span>
             </div>
           )}
           <div className={`px-3 py-1 rounded-full backdrop-blur-sm ${
@@ -337,34 +359,38 @@ const MatchDetails = () => {
                     )}
                   </button>
                 </div>
-                {!showDeleteConfirm ? (
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="w-full py-3 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center gap-2 text-sm hover:bg-destructive/20 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Excluir Pelada
-                  </button>
-                ) : (
-                  <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 space-y-2">
-                    <p className="text-sm text-center text-destructive font-bold">Tem certeza? Esta ação não pode ser desfeita.</p>
-                    <div className="flex gap-2">
+                {isCreator && (
+                  <>
+                    {!showDeleteConfirm ? (
                       <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 py-2 rounded-xl bg-secondary text-sm font-bold"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full py-3 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center gap-2 text-sm hover:bg-destructive/20 transition-colors"
                       >
-                        Cancelar
+                        <Trash2 className="w-4 h-4" />
+                        Excluir Pelada
                       </button>
-                      <button
-                        onClick={handleDeleteMatch}
-                        disabled={deleteMatch.isPending}
-                        className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        {deleteMatch.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                        Confirmar
-                      </button>
-                    </div>
-                  </div>
+                    ) : (
+                      <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 space-y-2">
+                        <p className="text-sm text-center text-destructive font-bold">Tem certeza? Esta ação não pode ser desfeita.</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="flex-1 py-2 rounded-xl bg-secondary text-sm font-bold"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={handleDeleteMatch}
+                            disabled={deleteMatch.isPending}
+                            className="flex-1 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                          >
+                            {deleteMatch.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            Confirmar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -444,16 +470,34 @@ const MatchDetails = () => {
                   </div>
                   <div className="space-y-2">
                     {confirmedPlayers.length > 0 ? (
-                      confirmedPlayers.map((player: Player) => (
-                        <PlayerListItem
-                          key={player.id}
-                          player={player}
-                          isOrganizer={isOrganizer}
-                          isPaid={participantPaymentStatus(player.id)}
-                          showPhone={isOrganizer}
-                          onTogglePayment={isOrganizer ? () => handleTogglePayment(player.id, participantPaymentStatus(player.id)) : undefined}
-                        />
-                      ))
+                      confirmedPlayers.map((player: Player) => {
+                        const isPlayerOrganizer = player.isOrganizer;
+                        const isPlayerCreator = (player as any).user_id === match.creator_id || player.id === match.creator_id;
+                        const canPromote = isOrganizer && !isPlayerOrganizer && organizerCount < 5 && player.id !== user?.id && (player as any).user_id !== user?.id;
+                        const playerUserId = (player as any).user_id || player.id;
+                        
+                        return (
+                          <div key={player.id} className="relative">
+                            <PlayerListItem
+                              player={player}
+                              isOrganizer={isOrganizer}
+                              isPaid={participantPaymentStatus(player.id)}
+                              showPhone={isOrganizer}
+                              onTogglePayment={isOrganizer ? () => handleTogglePayment(player.id, participantPaymentStatus(player.id)) : undefined}
+                            />
+                            {canPromote && (
+                              <button
+                                onClick={() => handlePromoteOrganizer(playerUserId, player.nickname)}
+                                disabled={promoteOrganizer.isPending}
+                                className="absolute top-2 right-14 p-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+                                title="Tornar organizador"
+                              >
+                                <Shield className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })
                     ) : (
                       <div className="player-card p-6 text-center">
                         <p className="text-muted-foreground">Nenhum jogador confirmado ainda</p>
