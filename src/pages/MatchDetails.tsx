@@ -7,6 +7,8 @@ import { SmartTeamSorter } from '@/components/SmartTeamSorter';
 import { MatchInternalFeed } from '@/components/MatchInternalFeed';
 import { WaitingListManager } from '@/components/WaitingListManager';
 import { MatchCardSkeleton } from '@/components/MatchCardSkeleton';
+import { MatchTimer } from '@/components/MatchTimer';
+import { ShareMatch } from '@/components/ShareMatch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMatch, useJoinMatch, useLeaveMatch, useTogglePayment, useDeleteMatch } from '@/hooks/useMatches';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +53,7 @@ const MatchDetails = () => {
       ?.filter((p: any) => p.status === 'confirmed')
       .map((p: any) => ({
         id: p.profiles?.id || p.user_id,
+        user_id: p.user_id,
         name: p.profiles?.name || 'Jogador',
         nickname: p.profiles?.nickname || 'Jogador',
         position: (p.profiles?.position || 'MEI') as any,
@@ -64,6 +67,7 @@ const MatchDetails = () => {
           physical: p.profiles?.physical || 70,
         },
         avatar: p.profiles?.avatar_url,
+        phone: p.profiles?.phone || null,
         isOrganizer: p.user_id === match.creator_id,
       })) || [];
   }, [match]);
@@ -262,6 +266,12 @@ const MatchDetails = () => {
           </div>
         </div>
 
+        {/* Share Match */}
+        <ShareMatch matchId={match.id} matchTitle={match.title} />
+
+        {/* Match Timer */}
+        {(isOrganizer || isConfirmed) && <MatchTimer />}
+
         {/* Action Buttons */}
         {!isJoined && !isOrganizer ? (
           <button
@@ -442,6 +452,7 @@ const MatchDetails = () => {
                           player={player}
                           isOrganizer={isOrganizer}
                           isPaid={participantPaymentStatus(player.id)}
+                          showPhone={isOrganizer}
                           onTogglePayment={isOrganizer ? () => handleTogglePayment(player.id, participantPaymentStatus(player.id)) : undefined}
                         />
                       ))

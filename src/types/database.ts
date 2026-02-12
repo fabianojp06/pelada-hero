@@ -15,6 +15,7 @@ export interface Profile {
   defending: number;
   physical: number;
   avatar_url: string | null;
+  phone: string | null;
   created_at: string;
   updated_at: string;
 }

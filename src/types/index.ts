@@ -17,6 +17,7 @@ export interface Player {
   overall: number;
   attributes: PlayerAttributes;
   avatar?: string;
+  phone?: string | null;
   isOrganizer?: boolean;
 }
 
