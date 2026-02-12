@@ -354,6 +354,32 @@ export const useUpdateParticipantStatus = () => {
   });
 };
 
+export const useUpdateMatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ matchId, data }: { matchId: string; data: Record<string, any> }) => {
+      const { data: result, error } = await supabase
+        .from('matches')
+        .update(data)
+        .eq('id', matchId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[useUpdateMatch] Error:', error);
+        throw new Error(error.message || 'Erro ao atualizar pelada');
+      }
+      return result;
+    },
+    onSuccess: (_, { matchId }) => {
+      queryClient.invalidateQueries({ queryKey: ['matches'] });
+      queryClient.invalidateQueries({ queryKey: ['match', matchId] });
+      queryClient.invalidateQueries({ queryKey: ['my-matches'] });
+    },
+  });
+};
+
 export const useTogglePayment = () => {
   const queryClient = useQueryClient();
 

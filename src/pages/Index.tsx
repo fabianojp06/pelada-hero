@@ -17,8 +17,9 @@ const Index = () => {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: matches, isLoading: matchesLoading } = useMatches();
   
-  // Get next upcoming match
-  const nextMatch = matches?.[0];
+  // Get next upcoming match (future only)
+  const today = new Date().toISOString().split('T')[0];
+  const nextMatch = matches?.filter(m => m.date >= today)?.[0];
 
   // Build player data from profile or use mock
   const currentPlayer = profile ? {
