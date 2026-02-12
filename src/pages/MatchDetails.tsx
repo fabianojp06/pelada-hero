@@ -226,9 +226,9 @@ const MatchDetails = () => {
         <div className="grid grid-cols-3 gap-3">
           <div className="player-card p-3 text-center">
             <Calendar className="w-5 h-5 mx-auto mb-1 text-primary" />
-            <p className="text-sm font-bold">{format(new Date(match.date), 'dd/MM')}</p>
+            <p className="text-sm font-bold">{format(new Date(match.date + 'T00:00:00'), 'dd/MM')}</p>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(match.date), 'EEE', { locale: ptBR })}
+              {format(new Date(match.date + 'T00:00:00'), 'EEE', { locale: ptBR })}
             </p>
           </div>
           <div className="player-card p-3 text-center">
