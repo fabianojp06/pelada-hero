@@ -5,7 +5,7 @@ import { ProfileSkeleton } from '@/components/ProfileSkeleton';
 import { positionLabels } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { Edit3, Trophy, Target, Clock, Crown, LogOut, Loader2, Phone } from 'lucide-react';
+import { Edit3, Trophy, Target, Clock, Crown, LogOut, Loader2, Phone, Share2, AtSign, Copy, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { PlayerPosition } from '@/types/database';
@@ -21,8 +21,11 @@ const Profile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<PlayerPosition | null>(null);
   const [phoneInput, setPhoneInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const currentPosition = selectedPosition || profile?.position || 'MEI';
 
@@ -56,6 +59,38 @@ const Profile = () => {
       setIsEditingPhone(false);
     } catch {
       toast({ title: 'Erro ao atualizar', variant: 'destructive' });
+    }
+  };
+
+  const handleUsernameSave = async () => {
+    const clean = usernameInput.replace(/[^a-zA-Z0-9._]/g, '').toLowerCase();
+    if (clean.length < 3) {
+      toast({ title: 'Username inválido', description: 'Mínimo de 3 caracteres', variant: 'destructive' });
+      return;
+    }
+    try {
+      await updateProfile.mutateAsync({ username: clean } as any);
+      toast({ title: 'Username atualizado!', description: `@${clean}` });
+      setIsEditingUsername(false);
+    } catch {
+      toast({ title: 'Username indisponível', description: 'Tente outro nome', variant: 'destructive' });
+    }
+  };
+
+  const handleShareCard = async () => {
+    const username = (profile as any)?.username;
+    const shareUrl = `${window.location.origin}/profile/${username || profile?.user_id}`;
+    const text = `Confira meu card no Pelada Hero! ⚽`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Meu Card - Pelada Hero', text, url: shareUrl });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({ title: 'Link copiado!' });
     }
   };
 
@@ -108,7 +143,59 @@ const Profile = () => {
     <Layout title="PERFIL">
       <div className="p-4 space-y-6">
         {/* Player Card */}
-        <PlayerCard player={currentPlayer} />
+        <div className="relative">
+          <PlayerCard player={currentPlayer} />
+          <button
+            onClick={handleShareCard}
+            className="absolute top-4 right-4 p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-secondary transition-colors"
+          >
+            {copied ? <Check className="w-5 h-5 text-primary" /> : <Share2 className="w-5 h-5 text-muted-foreground" />}
+          </button>
+        </div>
+
+        {/* Username */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-xl tracking-wider">USERNAME</h3>
+            <button
+              onClick={() => {
+                setIsEditingUsername(!isEditingUsername);
+                setUsernameInput((profile as any).username || '');
+              }}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+            >
+              <Edit3 className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+          {isEditingUsername ? (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+                  placeholder="seu.username"
+                  className="w-full bg-secondary rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <button
+                onClick={handleUsernameSave}
+                disabled={updateProfile.isPending}
+                className="px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm"
+              >
+                {updateProfile.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              </button>
+            </div>
+          ) : (
+            <div className="player-card p-4 flex items-center gap-3">
+              <AtSign className="w-5 h-5 text-primary" />
+              <span className="text-muted-foreground">
+                {(profile as any).username ? `@${(profile as any).username}` : 'Não definido'}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Position Selector */}
         <div className="space-y-3">

@@ -6,6 +6,7 @@ export interface Profile {
   user_id: string;
   name: string;
   nickname: string | null;
+  username: string | null;
   position: PlayerPosition;
   overall: number;
   pace: number;
