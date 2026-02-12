@@ -5,7 +5,7 @@ import { ProfileSkeleton } from '@/components/ProfileSkeleton';
 import { positionLabels } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
-import { Edit3, Trophy, Target, Clock, Crown, LogOut, Loader2 } from 'lucide-react';
+import { Edit3, Trophy, Target, Clock, Crown, LogOut, Loader2, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { PlayerPosition } from '@/types/database';
@@ -20,7 +20,9 @@ const Profile = () => {
   const updateProfile = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<PlayerPosition | null>(null);
+  const [phoneInput, setPhoneInput] = useState('');
 
   const currentPosition = selectedPosition || profile?.position || 'MEI';
 
@@ -39,6 +41,21 @@ const Profile = () => {
         description: 'Tente novamente mais tarde',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handlePhoneSave = async () => {
+    const digits = phoneInput.replace(/\D/g, '');
+    if (digits.length < 10) {
+      toast({ title: 'Celular inválido', description: 'Informe um número com DDD', variant: 'destructive' });
+      return;
+    }
+    try {
+      await updateProfile.mutateAsync({ phone: digits } as any);
+      toast({ title: 'Celular atualizado!' });
+      setIsEditingPhone(false);
+    } catch {
+      toast({ title: 'Erro ao atualizar', variant: 'destructive' });
     }
   };
 
@@ -131,6 +148,52 @@ const Profile = () => {
             <div className="player-card p-4 flex items-center justify-between">
               <span className="text-muted-foreground">{positionLabels[currentPosition]}</span>
               <span className="position-badge">{currentPosition}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Phone */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-xl tracking-wider">CELULAR</h3>
+            <button
+              onClick={() => {
+                setIsEditingPhone(!isEditingPhone);
+                setPhoneInput((profile as any).phone || '');
+              }}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+            >
+              <Edit3 className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+          {isEditingPhone ? (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="tel"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="11999998888"
+                  className="w-full bg-secondary rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              <button
+                onClick={handlePhoneSave}
+                disabled={updateProfile.isPending}
+                className="px-4 rounded-xl bg-primary text-primary-foreground font-bold text-sm"
+              >
+                {updateProfile.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+              </button>
+            </div>
+          ) : (
+            <div className="player-card p-4 flex items-center gap-3">
+              <Phone className="w-5 h-5 text-primary" />
+              <span className="text-muted-foreground">
+                {(profile as any).phone
+                  ? ((p: string) => p.length === 11 ? `(${p.slice(0,2)}) ${p.slice(2,7)}-${p.slice(7)}` : p)((profile as any).phone)
+                  : 'Não informado'}
+              </span>
             </div>
           )}
         </div>

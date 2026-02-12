@@ -5,12 +5,13 @@ import { Layout } from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, User, ArrowLeft, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, Loader2, Phone } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Email inválido');
 const passwordSchema = z.string().min(6, 'Senha deve ter pelo menos 6 caracteres');
 const nameSchema = z.string().min(2, 'Nome deve ter pelo menos 2 caracteres');
+const phoneSchema = z.string().min(10, 'Celular deve ter pelo menos 10 dígitos').max(15, 'Celular inválido');
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -24,8 +25,9 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; phone?: string }>({});
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -41,7 +43,7 @@ const Auth = () => {
   }, [searchParams]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; name?: string } = {};
+    const newErrors: { email?: string; password?: string; name?: string; phone?: string } = {};
     
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
@@ -59,6 +61,10 @@ const Auth = () => {
       const nameResult = nameSchema.safeParse(name);
       if (!nameResult.success) {
         newErrors.name = nameResult.error.errors[0].message;
+      }
+      const phoneResult = phoneSchema.safeParse(phone.replace(/\D/g, ''));
+      if (!phoneResult.success) {
+        newErrors.phone = phoneResult.error.errors[0].message;
       }
     }
     
@@ -98,7 +104,7 @@ const Auth = () => {
           navigate('/');
         }
       } else if (mode === 'signup') {
-        const { error } = await signUp(email, password, name);
+        const { error } = await signUp(email, password, name, phone.replace(/\D/g, ''));
         if (error) {
           if (error.message.includes('already registered')) {
             toast({
@@ -194,6 +200,22 @@ const Auth = () => {
                   />
                 </div>
                 {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
+              </div>
+            )}
+
+            {mode === 'signup' && (
+              <div className="space-y-2">
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    type="tel"
+                    placeholder="Celular (ex: 11999998888)"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="pl-10 h-12 bg-secondary border-muted"
+                  />
+                </div>
+                {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
               </div>
             )}
 
