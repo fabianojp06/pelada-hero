@@ -44,6 +44,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "match_feed_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "match_feed_posts_match_id_fkey"
             columns: ["match_id"]
             isOneToOne: false
